@@ -1,14 +1,12 @@
 /**
 *
-    ！！！此脚本永远禁止 “所谓大佬————shuye73” 使用，是我耽误您抄袭了，祝您和您的家人平安。
-
     Name: 京喜财富岛
     Address: 京喜App ====>>>> 全民赚大钱
     Author: MoPoQAQ
-    Created：2020/x/xx xx:xx
-    Updated: 2021/3/12 14:20
+    Update: 2021/2/2 13:00
     Thanks:
       whyour大佬
+      TG: https://t.me/joinchat/O1WgnBbM18YjQQVFQ_D86w
       GitHub: https://github.com/whyour
       
       新用户签到问题反馈者：https://github.com/NanjolnoRing
@@ -79,14 +77,6 @@
       ## 默认为 "false"，静默，不发送推送通知消息，如想收到通知，请修改为 "true"
       ## 如果你不想完全关闭或者完全开启通知，只想在特定的时间发送通知，可以参考上面面的“定义东东萌宠是否静默运行”部分，设定几个if判断条件
       export CFD_NOTIFY_CONTROL=""
-
-    logs:
-    2021/2/24 9:00
-      - 添加自动领取年终福利活动
-      - 添加自动领取升级奖励
-      - 修复超级助力App环境问题
-    2021/2/25 11:11
-      - 修复长时间不改代码问题
 *
 **/
 
@@ -94,23 +84,23 @@ const $ = new Env("京喜财富岛");
 const JD_API_HOST = "https://m.jingxi.com/";
 const notify = $.isNode() ? require('./sendNotify') : '';
 const jdCookieNode = $.isNode() ? require("./jdCookie.js") : "";
-const jdTokenNode = $.isNode() ? require('./jdJxncTokens.js') : '';
+//const jdTokenNode = $.isNode() ? require('./jdJxncTokens.js') : '';
 $.showLog = $.getdata("cfd_showLog") ? $.getdata("cfd_showLog") === "true" : false;
 $.notifyTime = $.getdata("cfd_notifyTime");
 $.result = [];
 $.cookieArr = [];
 $.currentCookie = '';
-$.tokenArr = [];
+//$.tokenArr = [];
 $.currentToken = {};
 $.allTask = [];
 $.info = {};
 
 !(async () => {
   if (!getCookies()) return;
-  if (!getTokens()) return;
+//  if (!getTokens()) return;
   for (let i = 0; i < $.cookieArr.length; i++) {
     $.currentCookie = $.cookieArr[i];
-    $.currentToken = $.tokenArr[i] || {};
+//    $.currentToken = $.tokenArr[0];
     if ($.currentCookie) {
       $.userName = decodeURIComponent($.currentCookie.match(/pt_pin=(.+?);/) && $.currentCookie.match(/pt_pin=(.+?);/)[1]);
       $.index = i + 1;
@@ -122,13 +112,6 @@ $.info = {};
          
       await $.wait(500);
       await querySignList();
-
-      //领取岛主升级奖励
-      promotionAward();
-
-      //领取年终福利
-      await $.wait(500);
-      getAdvEmployee(1001);
 
       await $.wait(500);
       await getMoney();
@@ -362,65 +345,6 @@ function getMoney_dwSource_3( _key, sceneList ) {
         }
       }
     );
-  });
-}
-
-//判断年终福利是否领取
-//user/GetAdvEmployee
-//strZone=jxcfd&bizCode=jxcfd&source=jxcfd&dwEnv=7&_cfd_t=1614127340116&ptag=138631.26.55&
-//dwSenceId=1001&dwIsSlave=0&_stk=_cfd_t%2CbizCode%2CdwEnv%2CdwIsSlave%2CdwSenceId%2Cptag%2Csource%2CstrZone
-//&_=1614127340121&sceneval=2&g_login_type=1&callback=jsonpCBKH&g_ty=ls
-function getAdvEmployee(_key) { 
-  $.get(taskUrl(`user/GetAdvEmployee`, `dwSenceId=${_key}&dwIsSlave=0&_stk=_cfd_t%2CbizCode%2CdwEnv%2CdwIsSlave%2CdwSenceId%2Cptag%2Csource%2CstrZone`), async(err, resp, data) => {
-    try {
-      const { SceneEmployeeInfo:{ SceneId, SceneName, dwCurStage } , dwNextSceneId, sErrMsg } = JSON.parse(data);
-      if( sErrMsg === `success` && dwCurStage === 1) {
-        await advEmployeeAward( SceneId, SceneName );
-        await $.wait(500);
-        if(dwNextSceneId > 0 ) {
-          _key = dwNextSceneId;
-          getAdvEmployee (_key);
-        }
-      }
-    } catch (e) {
-      $.logErr(e, resp);
-    }
-  });
-}
-
-//领取年终福利
-//user/AdvEmployeeAward
-//strZone=jxcfd&bizCode=jxcfd&source=jxcfd&dwEnv=7&_cfd_t=1614127342671&ptag=138631.26.55
-//&dwSenceId=1001&_stk=_cfd_t%2CbizCode%2CdwEnv%2CdwSenceId%2Cptag%2Csource%2CstrZone&_ste=1
-//&_=1614127342672&sceneval=2&g_login_type=1&callback=jsonpCBKQ&g_ty=ls
-function advEmployeeAward(_key, strSceneName) {
-  return new Promise(async (resolve) =>{
-    $.get(taskUrl(`user/AdvEmployeeAward`,`dwSenceId=${_key}&_stk=_cfd_t%2CbizCode%2CdwEnv%2CdwSenceId%2Cptag%2Csource%2CstrZone`), async(err, resp, data) => {
-      try {
-        const  { sErrMsg, strAwardDetail: { strName } } = JSON.parse(data);
-        $.log(`\n【${strSceneName}】💰雇主奖励：${ sErrMsg == 'success' ? `获取雇主奖励：¥ ${strName || 0}` : sErrMsg } \n${$.showLog ? data : ""}`);
-      } catch (e) {
-        $.logErr(e, resp);
-      } finally {
-        resolve();
-      }
-    });
-  });
-}
-
-//领取岛主升级奖励
-//user/PromotionAward
-//strZone=jxcfd&bizCode=jxcfd&source=jxcfd&dwEnv=7&_cfd_t=1614127340122&ptag=138631.26.55
-//&_stk=_cfd_t%2CbizCode%2CdwEnv%2Cptag%2Csource%2CstrZone&_ste=1
-//&_=1614127340124&sceneval=2&g_login_type=1&callback=jsonpCBKI&g_ty=ls
-function promotionAward() {
-  $.get(taskUrl(`user/PromotionAward`, `_stk=_cfd_t%2CbizCode%2CdwEnv%2Cptag%2Csource%2CstrZone`), async (err, resp, data) => {
-    try {
-      const { sErrMsg, strPrizeName } = JSON.parse(data);
-      $.log(`\n💰岛主升级奖励：${ sErrMsg == 'success' ? `获取升级奖励：¥ ${strPrizeName || 0}` : sErrMsg } \n${$.showLog ? data : ""}`);
-    } catch (e) {
-      $.logErr(e, resp);
-    }
   });
 }
 
@@ -744,11 +668,6 @@ function submitInviteId(userName) {
 }
 
 //随机超级助力好友
-//user/JoinScene
-//strZone=jxcfd&bizCode=jxcfd&source=jxcfd&dwEnv=7&_cfd_t=1614129401306&ptag=&
-//strShareId=90A15070F26FE5335C0DD5B80BC737B570EE3333E55C6586B913301C30BBD298&dwSceneId=1001&dwType=2
-//&strPgtimestamp=1614129401239&strPhoneID=1fdab515ff3293f7fa8979661e521458d5a7a0b3&strPgUUNum=5e9a1cf37e0ad6fbe634840fcfe0ebb3
-//&_stk=_cfd_t%2CbizCode%2CdwEnv%2CdwSceneId%2CdwType%2Cptag%2Csource%2CstrPgUUNum%2CstrPgtimestamp%2CstrPhoneID%2CstrShareId%2CstrZone
 function createSuperAssistUser() {
   return new Promise(resolve => {
     const sceneIds = Object.keys($.info.SceneList);
@@ -757,7 +676,7 @@ function createSuperAssistUser() {
       try {
         const { data = {} } = JSON.parse(_data);
         $.log(`\n【👫🏻超级助力】超级助力码：${data.value}\n${$.showLog ? _data : ''}`);
-        $.get(taskUrl('user/JoinScene', `strPgtimestamp=${$.currentToken['timestamp']}&strPhoneID=${$.currentToken['phoneid']}&strPgUUNum=${$.currentToken['farm_jstoken']}&strShareId=${escape(data.value)}&dwSceneId=${sceneId}&dwType=2&_stk=_cfd_t%2CbizCode%2CdwEnv%2CdwSceneId%2CdwType%2Cptag%2Csource%2CstrPgUUNum%2CstrPgtimestamp%2CstrPhoneID%2CstrShareId%2CstrZone`), async (err, resp, data) => {
+        $.get(taskUrl('user/JoinScene', `strPgtimestamp=${$.currentToken['timestamp']}&strPhoneID=${$.currentToken['phoneid']}&strPgUUNum=${$.currentToken['farm_jstoken']}&strShareId=${escape(data.value)}&dwSceneId=${sceneId}&dwType=2`), async (err, resp, data) => {
           try {
             const { sErrMsg, data: { rewardMoney = 0 } = {} } = JSON.parse(data);
             $.log(`\n【👫🏻超级助力】超级助力：${sErrMsg}\n${$.showLog ? data : ''}`);
@@ -831,7 +750,6 @@ function submitGroupId() {
                 }
               } catch (e) {
                 $.logErr(e, resp);
-                resolve();
               } finally {
                 resolve();
               }
@@ -865,18 +783,13 @@ function openGroup() {
 }
 
 //助力好友寻宝大作战
-//user/JoinGroup
-//strZone=jxcfd&bizCode=jxcfd&source=jxcfd&dwEnv=7&_cfd_t=1614153421905&ptag=138920.20.4&
-//strGroupId=Jxcfd_GroupId_202_37661794&dwIsNewUser=0&pgtimestamp=1614153421889&phoneID=1fdab515ff3293f7fa8979661e521458d5a7a0b3&pgUUNum=794e1fa83f6455e43a18853b4f6e1419
-//&_stk=_cfd_t%2CbizCode%2CdwEnv%2CdwIsNewUser%2CpgUUNum%2Cpgtimestamp%2CphoneID%2Cptag%2Csource%2CstrGroupId%2CstrZone&_ste=1
-//&_=1614153421918&sceneval=2&g_login_type=1&callback=jsonpCBKI&g_ty=ls
 function joinGroup() {
   return new Promise( async (resolve) => {
     $.get({ url: 'https://api.ninesix.cc/api/jx-cfd-group' }, (err, resp, _data) => {
       try {
         const { data = {} } = JSON.parse(_data);
         $.log(`\n【🏝寻宝大作战】随机助力码：${data.value}\n${$.showLog ? _data : ''}`);
-        $.get(taskUrl(`user/JoinGroup`, `strGroupId=${data.value}&dwIsNewUser=${$.info.dwIsNewUser}&pgtimestamp=${$.currentToken['timestamp']}&phoneID=${$.currentToken['phoneid']}&pgUUNum=${$.currentToken['farm_jstoken']}&_stk=_cfd_t%2CbizCode%2CdwEnv%2CdwIsNewUser%2CpgUUNum%2Cpgtimestamp%2CphoneID%2Cptag%2Csource%2CstrGroupId%2CstrZone`), (err, resp, data) => {
+        $.get(taskUrl(`user/JoinGroup`, `strGroupId=${data.value}&dwIsNewUser=${$.info.dwIsNewUser}&pgtimestamp=${$.currentToken['timestamp']}&phoneID=${$.currentToken['phoneid']}&pgUUNum=${$.currentToken['farm_jstoken']}`), (err, resp, data) => {
           try {
             const { sErrMsg } = JSON.parse(data);
             $.log(`\n【🏝寻宝大作战】助力：${sErrMsg}\n${$.showLog ? data : ''}`);
@@ -1015,7 +928,7 @@ function showMsg() {
       $.msg($.name, "", `\n${$.result.join("\n")}`);
     }
     
-    if ($.isNode() && process.env.CFD_NOTIFY_CONTROL === 'true')
+    if ($.isNode() && process.env.CFD_NOTIFY_CONTROL)
       await notify.sendNotify(`${$.name} - 账号${$.index} - ${$.nickName}`, `账号${$.index}：${$.nickName || $.userName}\n${$.result.join("\n")}`);
       
     resolve();
